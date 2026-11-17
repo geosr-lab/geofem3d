@@ -1,0 +1,91 @@
+{
+  "name": "Contoh - pondasi di atas pasir (Hardening Soil) dan lempung",
+  "materials": [
+    {
+      "name": "Pasir",
+      "gamma_unsat": 17.0,
+      "gamma_sat": 20.0,
+      "E": 30000.0,
+      "nu": 0.3,
+      "c": 1.0,
+      "phi": 32.0,
+      "psi": 2.0,
+      "color": "#e2c27a",
+      "model": "Hardening Soil",
+      "E50ref": 30000.0,
+      "Eoedref": 30000.0,
+      "Eurref": 90000.0,
+      "m": 0.5,
+      "pref": 100.0,
+      "nu_ur": 0.2,
+      "Rf": 0.9
+    },
+    {
+      "name": "Lempung",
+      "gamma_unsat": 16.0,
+      "gamma_sat": 18.0,
+      "E": 12000.0,
+      "nu": 0.33,
+      "c": 12.0,
+      "phi": 24.0,
+      "psi": 0.0,
+      "color": "#9c7b5b",
+      "model": "Mohr-Coulomb",
+      "E50ref": 20000.0,
+      "Eoedref": 20000.0,
+      "Eurref": 60000.0,
+      "m": 0.5,
+      "pref": 100.0,
+      "nu_ur": 0.2,
+      "Rf": 0.9
+    }
+  ],
+  "borehole": {
+    "layers": [
+      {
+        "top": 0.0,
+        "bottom": -4.0,
+        "material": "Pasir"
+      },
+      {
+        "top": -4.0,
+        "bottom": -15.0,
+        "material": "Lempung"
+      }
+    ],
+    "water_level": -2.0
+  },
+  "gamma_w": 10.0,
+  "domain": {
+    "Lx": 20.0,
+    "Ly": 20.0,
+    "symmetry": true
+  },
+  "footing": {
+    "B": 2.0,
+    "L": 2.0,
+    "q": 150.0,
+    "kind": "flexible"
+  },
+  "mesh": {
+    "coarse": 3.0,
+    "fine": 0.8,
+    "refine_depth": 2.0,
+    "refine_margin": 0.75
+  },
+  "phases": {
+    "method": "modified_newton",
+    "tolerance": 0.01,
+    "max_iterations": 100,
+    "initial_steps": 8,
+    "max_steps": 200,
+    "min_step": 0.001,
+    "run_safety": true,
+    "sf_increment": 0.1,
+    "sf_min_increment": 0.005,
+    "sf_max_steps": 60,
+    "sf_max": 10.0
+  },
+  "file_version": 1,
+  "application": "GeoFEM 3D"
+}
