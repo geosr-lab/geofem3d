@@ -186,3 +186,8 @@ Pyodide (WebAssembly), tanpa gmsh dan tanpa GUI. Halamannya ada di
 disalin dari folder `geofem/` repo ini. Jaringnya terstruktur (garis grid di tepi pondasi, batas
 lapisan, dan muka air tanah). Contoh bawaan: jaring kasar 13,90 mm dan SF 1,29, jaring sedang
 14,49 mm dan SF 1,16, jaring gmsh desktop 14,21 mm dan SF 1,19.
+
+## 9. Lisensi
+
+Kode GeoFEM 3D berlisensi [MIT](LICENSE), sama seperti GeoSR. Huruf di `geofem/aset/font/`
+tetap berlisensi SIL Open Font License 1.1 (berkas lisensinya ada di folder itu).
