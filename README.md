@@ -177,3 +177,12 @@ Tampilan diselaraskan dengan situs [GeoSR](https://geosr-lab.github.io/): warna 
 terang dan gelap, menu **Tampilan → Tema**), huruf Archivo dan Plus Jakarta Sans. Kedua huruf
 berlisensi SIL Open Font License 1.1; berkas TTF di `geofem/aset/font/` dikonversi dari WOFF2
 Fontsource tanpa mengubah glyph, lisensinya disertakan di folder yang sama.
+
+## 8. Versi browser (GeoSR)
+
+`geofem/web.py` dan `geofem/mesh_terstruktur.py` membuat GeoFEM 3D bisa dijalankan di browser lewat
+Pyodide (WebAssembly), tanpa gmsh dan tanpa GUI. Halamannya ada di
+[geosr-lab.github.io/geofem3d](https://geosr-lab.github.io/geofem3d/); berkas solver di situs itu
+disalin dari folder `geofem/` repo ini. Jaringnya terstruktur (garis grid di tepi pondasi, batas
+lapisan, dan muka air tanah). Contoh bawaan: jaring kasar 13,90 mm dan SF 1,29, jaring sedang
+14,49 mm dan SF 1,16, jaring gmsh desktop 14,21 mm dan SF 1,19.

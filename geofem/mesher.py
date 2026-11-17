@@ -118,13 +118,13 @@ def generate_mesh(p: Project, log=None) -> Mesh:
         gmsh.finalize()
 
     coords = np.asarray(coords).reshape(-1, 3)
-    tags = np.asarray(tags, np.int64)
-    enodes = np.asarray(enodes, np.int64).reshape(-1, 10)
-    lookup = np.full(tags.max() + 1, -1, np.int64)
+    tags = np.asarray(tags, np.intp)
+    enodes = np.asarray(enodes, np.intp).reshape(-1, 10)
+    lookup = np.full(tags.max() + 1, -1, np.intp)
     lookup[tags] = np.arange(len(tags))
     elems = lookup[enodes]
     used = np.unique(elems)
-    remap = np.full(len(tags), -1, np.int64)
+    remap = np.full(len(tags), -1, np.intp)
     remap[used] = np.arange(len(used))
     nodes = coords[used]
     elems = remap[elems]
@@ -137,7 +137,7 @@ def generate_mesh(p: Project, log=None) -> Mesh:
 
 def assign_layers(p: Project, nodes, elems):
     zc = nodes[elems[:, :4], 2].mean(1)
-    lay = np.zeros(len(elems), np.int64)
+    lay = np.zeros(len(elems), np.intp)
     for i, l in enumerate(p.borehole.layers):
         lay[(zc <= l.top + 1e-9) & (zc >= l.bottom - 1e-9)] = i
     return lay
@@ -173,9 +173,9 @@ def structured_box_mesh(lx, ly, lz, nx, ny, nz, origin=(0.0, 0.0, 0.0)):
                         m = (c[a] + c[b]) // 2
                         mids.append(nid(*m))
                     elems.append(corner + mids)
-    elems = np.array(elems, np.int64)
+    elems = np.array(elems, np.intp)
     used = np.unique(elems)
-    remap = np.full(len(nodes), -1, np.int64)
+    remap = np.full(len(nodes), -1, np.intp)
     remap[used] = np.arange(len(used))
     nodes = nodes[used]
     elems = fem.fix_orientation(nodes, remap[elems])

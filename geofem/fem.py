@@ -60,7 +60,7 @@ class Kinematics:
 
     def __init__(self, nodes, elems):
         self.nodes = np.asarray(nodes, float)
-        self.elems = np.asarray(elems, np.int64)
+        self.elems = np.asarray(elems, np.intp)   # intp: bincount on 32-bit WebAssembly (Pyodide)
         X = self.nodes[self.elems]                                    # (E,10,3)
         J = np.einsum("gin,enj->egij", DN_GP, X)                      # (E,4,3,3)
         self.detJ = np.linalg.det(J)
@@ -167,4 +167,4 @@ def vertical_pressure_load(nodes, faces, q, ndof):
     t = np.einsum("gin,fnj->fgij", _TDN, X)
     jac = np.linalg.norm(np.cross(t[:, :, 0], t[:, :, 1]), axis=-1)        # (F,3)
     fn = np.einsum("gn,fg,g->fn", _TN, jac, _TRI_W) * (-q)                # (F,6)
-    return np.bincount((3 * faces + 2).ravel(), fn.ravel(), minlength=ndof)
+    return np.bincount((3 * np.asarray(faces, np.intp) + 2).ravel(), fn.ravel(), minlength=ndof)

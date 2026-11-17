@@ -148,7 +148,7 @@ class FEModel:
         self.area_factor = 4.0 if project.domain.symmetry else 1.0
 
         # ---- reduced DOF map (fixities, rigid footing tie)
-        dof_map = np.full(self.ndof, -1, np.int64)
+        dof_map = np.full(self.ndof, -1, np.intp)
         free = ~fixed
         rigid = project.footing.kind == "rigid"
         if rigid:
