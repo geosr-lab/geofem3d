@@ -204,8 +204,8 @@ def default_project() -> Project:
     return Project(
         name="Contoh - fondasi bujur sangkar di atas pasir dan lempung",
         materials=[
-            Material("Pasir", 17.0, 20.0, 30000.0, 0.30, 1.0, 32.0, 2.0, "#e2c27a"),
-            Material("Lempung", 16.0, 18.0, 12000.0, 0.33, 12.0, 24.0, 0.0, "#9c7b5b"),
+            Material("Pasir", 17.0, 20.0, 30000.0, 0.30, 1.0, 32.0, 2.0, "#d6b25f"),
+            Material("Lempung", 16.0, 18.0, 12000.0, 0.33, 12.0, 24.0, 0.0, "#8fa89b"),
         ],
         borehole=Borehole(
             layers=[Layer(0.0, -4.0, "Pasir"), Layer(-4.0, -15.0, "Lempung")],

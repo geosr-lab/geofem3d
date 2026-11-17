@@ -170,3 +170,10 @@ salah satu nama, sesuaikan di sana.
 - Griffiths, D.V., Lane, P.A. (1999). Slope stability analysis by finite elements. *Géotechnique* 49(3).
 - Manual PLAXIS 3D (Material Models, Scientific) yang terpasang bersama PLAXIS dipakai hanya sebagai
   bacaan teori; tidak ada teks, gambar, atau kode PLAXIS yang disalin ke proyek ini.
+
+## 7. Tampilan dan aset
+
+Tampilan diselaraskan dengan situs [GeoSR](https://geosr-lab.github.io/): warna token GeoSR (tema
+terang dan gelap, menu **Tampilan → Tema**), huruf Archivo dan Plus Jakarta Sans. Kedua huruf
+berlisensi SIL Open Font License 1.1; berkas TTF di `geofem/aset/font/` dikonversi dari WOFF2
+Fontsource tanpa mengubah glyph, lisensinya disertakan di folder yang sama.

@@ -13,7 +13,7 @@ import numpy as np
 import pyvista as pv
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PySide6.QtCore import QObject, QPoint, QRect, QSize, Qt, QThread, QTimer, Signal
+from PySide6.QtCore import QObject, QPoint, QRect, QSettings, QSize, Qt, QThread, QTimer, Signal
 from PySide6.QtGui import QAction, QIcon, QImage, QPainter
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
                                QFormLayout, QHBoxLayout, QHeaderView, QLabel, QMainWindow,
@@ -22,13 +22,13 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBo
                                QTreeWidgetItem, QVBoxLayout, QWidget)
 from pyvistaqt import QtInteractor
 
-from . import APP_NAME, fem
+from . import APP_NAME, fem, tema
 from .material import voigt_to_tensor
 from .mesher import generate_mesh
 from .project import MODELS, Layer, Material, Project, default_project
 from .solver import Cancelled, run_analysis
 
-PALETTE = ["#e2c27a", "#9c7b5b", "#b9a37e", "#7f8f6a", "#c98f6b", "#8a8fa0"]
+PALETTE = tema.TERANG["lapis"]
 COLS = ["Nama", "Model", "Puncak (m)", "Dasar (m)", "γunsat (kN/m³)", "γsat (kN/m³)", "E (kPa)", "ν",
         "c (kPa)", "φ (°)", "ψ (°)", "E50ref (kPa)", "Eoedref (kPa)", "Eurref (kPa)", "m",
         "pref (kPa)", "νur", "Rf"]
@@ -50,18 +50,7 @@ QUANTITIES = ["Perpindahan total utot (mm)", "Perpindahan vertikal uz (mm)",
 CUTS = ["Tanpa potongan", "Potongan x-z (melalui pusat fondasi)", "Potongan y-z (melalui pusat fondasi)"]
 PHASE_NAMES = {"Initial": "Fase 0 - Tegangan awal (K0)", "Load": "Fase 1 - Beban fondasi (plastis)",
                "Safety": "Fase 2 - Angka keamanan (reduksi φ-c)"}
-STYLE = """
-QMainWindow, QWidget { background: #f4f6f8; color: #1f2a33; font-size: 9pt; }
-QTabWidget::pane { border: 1px solid #c9d2da; background: #ffffff; }
-QTabBar::tab { background: #dfe6ec; padding: 6px 14px; border: 1px solid #c9d2da; border-bottom: none; }
-QTabBar::tab:selected { background: #ffffff; color: #0d6e6e; font-weight: bold; }
-QPushButton { background: #0d6e6e; color: white; border: none; padding: 5px 12px; border-radius: 3px; }
-QPushButton:hover { background: #128585; }
-QPushButton:disabled { background: #9fb3b3; }
-QTreeWidget, QTableWidget, QPlainTextEdit { background: #ffffff; border: 1px solid #c9d2da; }
-QHeaderView::section { background: #e8edf1; border: 1px solid #c9d2da; padding: 3px; }
-QLabel#title { font-weight: bold; color: #0d6e6e; }
-"""
+
 
 
 def _vtk_text(s):
@@ -80,6 +69,11 @@ def dspin(lo, hi, val, dec=2, step=0.1, suffix=""):
     if suffix:
         w.setSuffix(" " + suffix)
     return w
+
+
+def angka(x, d):
+    """Angka gaya Indonesia: desimal koma, ribuan titik."""
+    return f"{x:,.{d}f}".replace(",", "#").replace(".", ",").replace("#", ".")
 
 
 def titled(text):
@@ -122,7 +116,11 @@ class MainWindow(QMainWindow):
         self._loading = False
         self.setWindowTitle(APP_NAME)
         self.resize(1440, 900)
-        self.setStyleSheet(STYLE)
+        self.t = tema.GELAP if QSettings("GeoSR", "GeoFEM3D").value("tema", "terang") == "gelap" else tema.TERANG
+        self.setStyleSheet(tema.qss(self.t))
+        ikon = tema.ASET / "ikon.svg"
+        if ikon.is_file():
+            self.setWindowIcon(QIcon(str(ikon)))
         self._build_menu()
         self._build_ui()
         self.populate()
@@ -145,6 +143,11 @@ class MainWindow(QMainWindow):
                            ("Dari depan", lambda: self.set_view("xz")), ("Dari samping", lambda: self.set_view("yz"))):
             a = QAction(text, self)
             a.triggered.connect(slot)
+            v.addAction(a)
+        v.addSeparator()
+        for text, nama in (("Tema terang", "terang"), ("Tema gelap", "gelap")):
+            a = QAction(text, self)
+            a.triggered.connect(lambda _=False, n=nama: self.set_theme(n))
             v.addAction(a)
         e = self.menuBar().addMenu("&Ekspor")
         for text, slot in (("Simpan gambar tampilan...", self.export_picture),
@@ -184,6 +187,13 @@ class MainWindow(QMainWindow):
             a = QAction(self.style().standardIcon(icon), text, self)
             a.triggered.connect(lambda _=False, s=slot: s())
             tb.addAction(a)
+
+    def set_theme(self, nama):
+        self.t = tema.GELAP if nama == "gelap" else tema.TERANG
+        QSettings("GeoSR", "GeoFEM3D").setValue("tema", nama)
+        self.setStyleSheet(tema.qss(self.t))
+        self.refresh_view()
+        self._draw_curve()
 
     def set_view(self, which):
         pl = self.plotter
@@ -226,7 +236,7 @@ class MainWindow(QMainWindow):
 
         # centre: 3D viewport
         self.plotter = QtInteractor(self)
-        self.plotter.set_background("#fbfcfd", top="#d9e3ea")
+        self.plotter.set_background(tema.TERANG["permukaan"], top=tema.TERANG["latar"])
 
         # right: curve + summary
         right = QWidget()
@@ -791,6 +801,7 @@ class MainWindow(QMainWindow):
     def refresh_view(self):
         pl = self.plotter
         pl.clear()
+        pl.set_background(self.t["permukaan"], top=self.t["latar"])
         try:
             if self.results is not None and self.tabs.currentIndex() in (4, 5):
                 self._show_results()
@@ -809,19 +820,19 @@ class MainWindow(QMainWindow):
         for l in p.borehole.layers:
             m = p.material(l.material)
             box = pv.Box((-hx, hx, -hy, hy, l.bottom, l.top))
-            pl.add_mesh(box, color=m.color, opacity=0.55, show_edges=True, edge_color="#6b5a45",
+            pl.add_mesh(box, color=m.color, opacity=0.55, show_edges=True, edge_color=self.t["teks2"],
                         label=m.name)
         zt, zb = p.ground_level, p.bottom_level
         if zb < p.borehole.water_level < zt:
             pl.add_mesh(pv.Plane(center=(0, 0, p.borehole.water_level), direction=(0, 0, 1),
                                  i_size=2 * hx, j_size=2 * hy),
-                        color="#3a7bd5", opacity=0.35)
+                        color=self.t["air"], opacity=0.35)
         f = p.footing
         t = 0.02 * max(p.domain.Lx, p.domain.Ly)
-        pl.add_mesh(pv.Box((-f.B / 2, f.B / 2, -f.L / 2, f.L / 2, zt, zt + t)), color="#5c6770")
+        pl.add_mesh(pv.Box((-f.B / 2, f.B / 2, -f.L / 2, f.L / 2, zt, zt + t)), color=self.t["pondasi"])
         arrows = pv.Arrow(start=(0, 0, zt + 6 * t), direction=(0, 0, -1), scale=5 * t)
-        pl.add_mesh(arrows, color="#c0392b")
-        pl.add_text("Geometri model", font_size=10, color="#1f2a33")
+        pl.add_mesh(arrows, color=self.t["beban"])
+        pl.add_text("Geometri model", font_size=10, color=self.t["teks"])
         pl.view_isometric()
 
     def _show_mesh(self):
@@ -829,10 +840,10 @@ class MainWindow(QMainWindow):
         g.cell_data["lapisan"] = self.mesh.elem_layer
         g = self._mirror(g)
         cols = [self.project.material(l.material).color for l in self.project.borehole.layers]
-        self.plotter.add_mesh(g, scalars="lapisan", cmap=cols, show_edges=True, edge_color="#40474d",
+        self.plotter.add_mesh(g, scalars="lapisan", cmap=cols, show_edges=True, edge_color=self.t["teks2"],
                               show_scalar_bar=False, n_colors=len(cols),
                               clim=(-0.5, len(cols) - 0.5))
-        self.plotter.add_text(f"Jaring: {self.mesh.n_elems} elemen tet-10", font_size=10, color="#1f2a33")
+        self.plotter.add_text(f"Jaring: {self.mesh.n_elems} elemen tet-10", font_size=10, color=self.t["teks"])
         self.plotter.view_isometric()
 
     def _show_results(self):
@@ -871,36 +882,36 @@ class MainWindow(QMainWindow):
             g = g.clip(normal="y" if cut == 1 else "x", origin=(0.0, 0.0, 0.0), invert=False)
         title = QUANTITIES[q]
         if q == 4:
-            self.plotter.add_mesh(g, color="#d7dde2", opacity=0.25, show_edges=self.oedges.isChecked())
+            self.plotter.add_mesh(g, color=self.t["permukaan2"], opacity=0.25, show_edges=self.oedges.isChecked())
             pts = res.model.kin.xgp[ph.plastic]
             if len(pts):
                 if self.project.domain.symmetry:
                     pts = np.vstack([pts * s for s in ([1, 1, 1], [-1, 1, 1], [1, -1, 1], [-1, -1, 1])])
-                self.plotter.add_points(pts, color="#d62728", point_size=6, render_points_as_spheres=True)
+                self.plotter.add_points(pts, color=self.t["laterit"], point_size=6, render_points_as_spheres=True)
         else:
             self.plotter.add_mesh(g, scalars="v", cmap="turbo", show_edges=self.oedges.isChecked(),
                                   scalar_bar_args={"title": _vtk_text(title.split(" (")[0]) + "\n"
                                                    + title[title.find("("):],
                                                    "vertical": True, "position_x": 0.80, "width": 0.07,
                                                    "title_font_size": 14, "label_font_size": 12,
-                                                   "color": "#1f2a33", "fmt": "%.3g"})
+                                                   "color": self.t["teks"], "fmt": "%.3g"})
         self.plotter.add_text(_vtk_text(f"{PHASE_NAMES.get(ph.name, ph.name)}\n{title}\n"
                                         f"skala deformasi {scale:.0f}x"),
-                              font_size=9, color="#1f2a33")
+                              font_size=9, color=self.t["teks"])
         self.plotter.view_isometric()
 
     # ------------------------------------------------------------------ curve + summary
     def _draw_curve(self):
         ax = self.ax
         ax.clear()
-        ax.grid(True, alpha=0.3)
+        tema.gaya_grafik(ax, self.fig, self.t)
         res = self.results
         ph_sel = None
         if res is not None and self.oph.currentIndex() >= 0 and self.oph.currentIndex() < len(res.phases):
             ph_sel = res.phases[self.oph.currentIndex()]
         if ph_sel is not None and ph_sel.name == "Safety" and len(ph_sel.curve) > 1:
             c = np.array(ph_sel.curve)
-            ax.plot(c[:, 1] * 1000, c[:, 0], "o-", color="#b5532a", ms=3)
+            ax.plot(c[:, 1] * 1000, c[:, 0], "o-", color=self.t["laterit"], ms=3, lw=1.8)
             ax.set_xlabel("|Δu| maks. (mm)")
             ax.set_ylabel("ΣMsf")
             self.curve_title.setText("Kurva reduksi φ-c (ΣMsf)")
@@ -911,20 +922,25 @@ class MainWindow(QMainWindow):
         if res is not None and res.phase("Load") is not None:
             if not (ph_sel is not None and ph_sel.name == "Safety"):
                 c = np.array(res.phase("Load").curve)
-                ax.plot(c[:, 1] * 1000, c[:, 0], "o-", color="#0d6e6e", ms=3)
-            s = [f"<b>Penurunan fondasi:</b> {res.footing_settlement * 1000:.2f} mm",
-                 f"<b>Penurunan maksimum:</b> {res.max_settlement * 1000:.2f} mm",
-                 f"<b>Beban tercapai:</b> {res.phase('Load').load_fraction * self.project.footing.q:.1f} kPa"
-                 f" dari {self.project.footing.q:.1f} kPa",
-                 f"<b>Titik plastis:</b> {int(res.phase('Load').plastic.sum())}"]
+                ax.plot(c[:, 1] * 1000, c[:, 0], "o-", color=self.t["aksen"], ms=3, lw=1.8)
             sf = res.safety_factor
-            s.append(f"<b>Angka keamanan SF:</b> {sf:.3f}" if sf is not None else
-                     "<b>Angka keamanan SF:</b> tidak dihitung")
-            s.append(f"<b>Waktu hitung:</b> {res.run_time:.1f} detik")
-            self.summary.setText("<br>".join(s))
+            q = self.project.footing.q
+            baris = [("Penurunan fondasi", angka(res.footing_settlement * 1000, 2), "mm"),
+                     ("Penurunan maksimum", angka(res.max_settlement * 1000, 2), "mm"),
+                     ("Beban tercapai", angka(res.phase('Load').load_fraction * q, 1), f"dari {angka(q, 1)} kPa"),
+                     ("Titik plastis", angka(int(res.phase('Load').plastic.sum()), 0), ""),
+                     ("Angka keamanan SF", angka(sf, 3) if sf is not None else "tidak dihitung", ""),
+                     ("Waktu hitung", angka(res.run_time, 1), "detik")]
+            c = self.t
+            self.summary.setText(
+                "<table cellspacing='0' cellpadding='3'>" + "".join(
+                    f"<tr><td style='color:{c['teks2']}'>{a}</td>"
+                    f"<td align='right' style='color:{c['laterit']};font-family:Archivo;font-weight:800;"
+                    f"font-size:12pt'>{b}</td><td style='color:{c['teks2']}'>{u}</td></tr>"
+                    for a, b, u in baris) + "</table>")
         else:
             ax.text(0.5, 0.5, "belum ada hasil", ha="center", va="center", transform=ax.transAxes,
-                    color="#888")
+                    color=self.t["teks2"])
             self.summary.setText("Belum ada hasil perhitungan.")
         self.canvas.draw_idle()
 
@@ -1005,6 +1021,7 @@ def _self_test(win, out):
 def run(args) -> int:
     app = QApplication.instance() or QApplication(sys.argv[:1])
     app.setApplicationName(APP_NAME)
+    tema.muat_huruf(app)
     project = None
     if args.project:
         project = Project.load(args.project)
