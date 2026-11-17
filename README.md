@@ -1,5 +1,7 @@
 # GeoFEM 3D
 
+[![Uji](https://github.com/geosr-lab/geofem3d/actions/workflows/uji.yml/badge.svg)](https://github.com/geosr-lab/geofem3d/actions/workflows/uji.yml)
+
 Program desktop sederhana untuk **analisis elemen hingga geoteknik 3D** yang ditulis dengan Python.
 Kasus yang ditangani: fondasi persegi panjang (fleksibel atau kaku) di permukaan tanah berlapis
 horizontal, dengan model tanah Mohr-Coulomb atau Hardening Soil (terdrainase) dan muka air tanah.
